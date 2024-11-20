@@ -9,7 +9,8 @@ if [ $? -ne 0 ]; then
     echo "Error"
     exit 1
 fi
-echo "$1" | ./a.out | less
+# echo "$1" | ./a.out | less
+echo "$1" | ./a.out
 
 if [ $? -ne 0 ]; then
     echo "Error"
