@@ -19,6 +19,12 @@ class Edge{
         int out;
         int edgeWeight;
 
+        Edge(){
+            in = -1;
+            out = -1;
+            edgeWeight = INT_MAX;
+        }
+
         Edge(int u, int v, int weight){
             in = u;
             out = v;
@@ -32,7 +38,6 @@ HSet disSet;
 vector<Edge> minimumSpanningTree;
 
 
-
 /*
    function declarations 
    */
@@ -44,6 +49,7 @@ void printEdges(vector<Edge>&);
 char getChar(int);
 int getMinEdge(int);
 bool checkIfSameParent(vector<int>&);
+int getVertexFromEdge(int);
 
 int main(){
     readGraph();
@@ -55,6 +61,7 @@ int main(){
     int numOfComponents = 7;
     while(numOfComponents > 1){
         vector<int> min_edges(7, INT_MAX);
+        map<pair<int,int>,Edge> componentsToMerge;
 #pragma omp parallel for
         for(int i = 0; i < 7; i++){
             int repVertex = disSet.Findcompress(i);
@@ -63,11 +70,11 @@ int main(){
                 continue;
             int minEdgeWeight = edgeWeightArray[2* minEdgeIndex + 1];
             int minWeightOutNeighbor = edgeWeightArray [2* minEdgeIndex];
-            cout<<getChar(i)<<' '<<getChar(minWeightOutNeighbor)<<' '<<minEdgeWeight<<endl;
+            // cout<<getChar(i)<<' '<<getChar(minWeightOutNeighbor)<<' '<<minEdgeWeight<<endl;
             //use critical to update the min_edges
 #pragma omp critical
             {
-                if(minEdgeWeight < min_edges[repVertex]) {
+                if(min_edges[repVertex] == INT_MAX || minEdgeWeight < edgeWeightArray[2*min_edges[repVertex]+1]) {
                     min_edges[repVertex] = minEdgeIndex;
                 }
             }
@@ -80,26 +87,55 @@ int main(){
         // }
         cout<<'\n';
 
-        printLoop(min_edges);
+        // printLoop(min_edges);
         //merge components in parallel
 #pragma omp parallel for
         for(int i = 0; i < 7; i++) {
             if (min_edges[i] == INT_MAX)
                 continue;
+            int temp_i = getVertexFromEdge(min_edges[i]);
             //find the minimum outgoing neighbour
             int outNeighbour = edgeWeightArray[2 * min_edges[i]];
             int outNeighbourWeight = edgeWeightArray[2 *  min_edges[i] + 1];
             int repVertex = disSet.Findcompress(i);
             int repOutNeighbour = disSet.Findcompress(outNeighbour);
             if (repVertex != repOutNeighbour){
-                disSet.Merge(repVertex,repOutNeighbour); 
-                minimumSpanningTree.push_back(
-                        Edge(i, outNeighbour, outNeighbourWeight)
-                        );
-#pragma omp atomic
-                numOfComponents--;
+                if (repOutNeighbour < repVertex) {
+                    swap(repVertex, repOutNeighbour);
+                    swap(temp_i, outNeighbour);
+                }
+// #pragma omp critical
+//                 {
+                // cout<<getChar(temp_i)<<' '<<getChar(outNeighbour)<<' '<<outNeighbourWeight<<endl;
+//                 }
+// #pragma omp critical
+                // {
+                if(componentsToMerge.find({repVertex,repOutNeighbour}) != componentsToMerge.end()){
+                    if(outNeighbourWeight < componentsToMerge[{repVertex,repOutNeighbour}].edgeWeight){
+                        componentsToMerge[{repVertex,repOutNeighbour}] = Edge(temp_i, outNeighbour, outNeighbourWeight);
+                    }
+                }
+                else
+                {
+                    componentsToMerge[{repVertex,repOutNeighbour}] = Edge(temp_i, outNeighbour, outNeighbourWeight);
+                }
+                // }
             }
         }
+        for(auto componentEdgeMap: componentsToMerge){
+            auto component = componentEdgeMap.first;
+            auto edge = componentEdgeMap.second;
+            // cout<<"Component = "<<getChar(component.first)<<' '<<getChar(component.second)<<endl;
+            // cout<<"Edge = "<<getChar(edge.in)<< ' '<< getChar(edge.out)<<' '<<edge.edgeWeight<<endl;
+
+            // disSet.Merge(repVertex,repOutNeighbour); 
+            if(disSet.Findcompress(component.first) == disSet.Findcompress(component.second))
+                continue;
+            disSet.Merge(component.first, component.second);
+            minimumSpanningTree.push_back(edge);
+            numOfComponents--;
+        }
+// #pragma omp atomic
     }
     printEdges(minimumSpanningTree);
 }
@@ -149,6 +185,18 @@ void printEdges(vector<Edge> & mst){
 
 char getChar(int a){
     return char(a+'a');
+}
+
+int getVertexFromEdge(int edgeNo){
+    int flag = 0;
+    int i;
+    for(i =0; i< 7;i++){
+        if(edgeNo <indexArray[i] ){
+            flag = 1;
+            break;
+        }
+    }
+    return ((flag==0)?7:(i-1));
 }
 
 int getMinEdge(int vertexNumber){

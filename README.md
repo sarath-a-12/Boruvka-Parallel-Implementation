@@ -5,11 +5,11 @@ the C programming language and have used Open MP as a tool to unlock parallelism
 
 ## How to run:
 
-For now the code can simply take as an argument the graph name and print out all the vertices and edges with their corresponding edge weights.
-
 ```bash
 git clone https://github.com/sarath-a-12/Boruvka-Parallel-Implementation.git
 ```
+
+## THIS IS YET TO BE IMPLEMENTED
 
 You can see the graphs stored in the /graphs folder.
 
