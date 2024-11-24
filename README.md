@@ -1,7 +1,7 @@
 # Boruvka's Algorithm in a multicore CPU
 
 Boruvka's algorithm is used to find the Minimum Spanning Tree (MST) of a graph. I have implemented a parallel version of the same in
-the C programming language and have used Open MP as a tool to unlock parallelism. Implementation details can be found below.
+the C++ programming language and have used Open MP as a tool to unlock parallelism. Implementation details can be found below.
 
 ## How to run:
 
@@ -9,17 +9,7 @@ the C programming language and have used Open MP as a tool to unlock parallelism
 git clone https://github.com/sarath-a-12/Boruvka-Parallel-Implementation.git
 ```
 
-## THIS IS YET TO BE IMPLEMENTED
-
-You can see the graphs stored in the /graphs folder.
-
-The list of graphs available in the folder are as follows:
-
-- **ljournal**
-- **u10m**
-- **USA**
-- **wikipedia**
-- **x2**
+Sample 
 
 Now you can simply view the graph vertices and edges using the following command
 
@@ -31,3 +21,4 @@ Now you can simply view the graph vertices and edges using the following command
 
 After the command, you can simply navigate the graph vertices and edge weights using the **j** (_for moving down_) and **k** (_for moving up_).
 Press **q** to quit.
+
