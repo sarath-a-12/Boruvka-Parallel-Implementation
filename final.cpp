@@ -33,19 +33,20 @@ class Edge{
         }
 };
 
-int noOfVertices = 7;
-int noOfEdges = 48;
-vector<int> indexArray(noOfVertices);
-vector<int> edgeWeightArray(noOfEdges);
+int noOfVertices;
+int noOfEdges;
+vector<int> indexArray;
+vector<int> edgeWeightArray;
 HSet disSet;
 vector<Edge> minimumSpanningTree;
+int prevNoOfComponents = -1;
 
 
 /*
    function declarations 
    */
 
-void readGraph();
+void readGraphinCSR(string);
 void getEdges(char);
 void printLoop(vector<int>&);
 void printEdges(vector<Edge>&);
@@ -55,7 +56,7 @@ bool checkIfSameParent(vector<int>&);
 int getVertexFromEdge(int);
 
 int main(){
-    readGraph();
+    readGraphinCSR("./graphs/x2.gr");
     int i;
     disSet.Allocate(noOfVertices);
     cout<<"The edges of MST are:"<<endl;
@@ -88,12 +89,12 @@ int main(){
         //     // disSet.parent[i] = disSet.Findcompress(i);
         //     cout<<getChar(i)<<'='<<getChar(disSet.parent[i])<<'\n';
         // }
-        cout<<'\n';
+        // cout<<'\n';
 
         // printLoop(min_edges);
         //merge components in parallel
 #pragma omp parallel for
-        for(int i = 0; i < noOfVertices; i++) {
+        for(int i = 0; i < noOfVertices; i++) { 
             if (min_edges[i] == INT_MAX)
                 continue;
             int temp_i = getVertexFromEdge(min_edges[i]);
@@ -124,7 +125,9 @@ int main(){
                 }
                 // }
             }
+            // cout<<i<<endl;
         }
+        cout<<"breakpoint\n";
         for(auto componentEdgeMap: componentsToMerge){
             auto component = componentEdgeMap.first;
             auto edge = componentEdgeMap.second;
@@ -138,6 +141,8 @@ int main(){
             minimumSpanningTree.push_back(edge);
             numOfComponents--;
         }
+
+        // if(numOfComponents == 3542490) break;
 // #pragma omp atomic
     }
     printEdges(minimumSpanningTree);
@@ -182,7 +187,8 @@ void getEdges(char vertex){
 
 void printEdges(vector<Edge> & mst){
     for(auto it: mst){
-        cout<<getChar(it.in)<<' '<<getChar(it.out)<<' '<<it.edgeWeight<<endl;
+        if (it.out != -1 && it.in != -1)
+        cout<<(it.in)<<' '<<(it.out)<<' '<<it.edgeWeight<<endl;
     }
 }
 
@@ -229,7 +235,7 @@ bool checkIfSameParent(vector<int> &arr){
 }
 
 
-void readBinaryGrFile(const string& filePath) {
+void readGraphinCSR(string filePath) {
     ifstream file(filePath, ios::binary);
 
     if (!file) {
@@ -239,9 +245,8 @@ void readBinaryGrFile(const string& filePath) {
 
     int32_t node1, node2, weight;  // Assuming weight is an integer (adjust to float if needed)
 
-    vector<int> indexArray(10,0);
+    vector<int>noOfEdgesPerVertex(10,0);
     vector<vector<int>> edgesArray(10);
-    int edgeCount = 0;
     while (file.read(reinterpret_cast<char*>(&node1), sizeof(node1))) {
         file.read(reinterpret_cast<char*>(&node2), sizeof(node2));
         file.read(reinterpret_cast<char*>(&weight), sizeof(weight));
@@ -249,21 +254,25 @@ void readBinaryGrFile(const string& filePath) {
         // Displaying the edge details
         // cout << "Edge: " << node1 << " -> " << node2 << ", Weight: " << weight << endl;
         // cout<<indexArray.size()-1<<' '<<node1<<endl;
-        if(node1 > indexArray.size() - 1){
-            indexArray.resize((node1 + 1));
+        if(node1 > noOfEdgesPerVertex.size() - 1){
+            noOfEdgesPerVertex.resize((node1 + 1));
             edgesArray.resize((node1 + 1));
         }
-        indexArray[node1]++;
+        noOfEdgesPerVertex[node1]++;
         edgesArray[node1].push_back(node2);
         edgesArray[node1].push_back(weight);
-        edgeCount++;
+        noOfEdges ++;
     }
-    vector<int> edgeWeightArray;
     for (auto vertex: edgesArray)
         for (auto outNeighbours: vertex)
             edgeWeightArray.push_back(outNeighbours);
     edgesArray = vector<vector<int>>(); //deleting the old array to save memory
-    // cout<<indexArray.size()<<' '<<edgesArray.size()<<endl;
+    indexArray.push_back(noOfEdgesPerVertex[0]);
+    for(int i =1; i< noOfEdgesPerVertex.size();i++){
+        indexArray.push_back(indexArray[i-1] + noOfEdgesPerVertex[i]);
+    }
+
+    noOfVertices = indexArray.size();
     file.close();
     // cout<<"Number of vertices = "<<maxVertexNumber<<" and no: of edges = "<<noOfEdges<<'\n';
 }

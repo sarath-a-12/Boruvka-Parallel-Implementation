@@ -40,6 +40,9 @@ void readBinaryGrFile(const string& filePath) {
     edgesArray = vector<vector<int>>(); //deleting the old array to save memory
     // cout<<indexArray.size()<<' '<<edgesArray.size()<<endl;
     file.close();
+    for(auto it: indexArray){
+        cout<<it<<' ';
+    }
     // cout<<"Number of vertices = "<<maxVertexNumber<<" and no: of edges = "<<noOfEdges<<'\n';
 }
 
